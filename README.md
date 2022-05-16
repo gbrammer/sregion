@@ -10,8 +10,8 @@ The STS-C formalism is described at http://www.ivoa.net/Documents/latest/STC-S.h
 ## Examples
 
 ```python
->>> from sregion import sregion
 >>> import numpy as np
+>>> from sregion import SRegion
 
 #
 # Polygon string
