@@ -70,6 +70,18 @@ def test_sregion():
     assert(sr.intersects(s3.shapely[0]) is True)
 
 
+def test_wrap():
+    """
+    """
+    x = np.array([0, 0, 1, 1]) - 177
+    y = np.array([0, 1, 1, 0])
+    sr = SRegion(np.array([x, y]).T, wrap=True)
+
+    assert(sr.N == 1)
+    assert(np.allclose(sr.area, 1.))
+    assert(np.allclose(sr.centroid, [360-177+0.5, 0.5]))
+
+
 def test_circles():
     """
     Initialize from ``CIRCLE X Y R``

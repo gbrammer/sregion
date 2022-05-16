@@ -52,7 +52,31 @@ def _parse_circle(spli, ncircle=32):
     return poly_i
 
 
-def _parse_sregion(sregion, ncircle=32, wrap=False, **kwargs):
+def _wrap_xy(xy):
+    """
+    Wrap x coordinate as an angle
+
+    Parameters
+    ----------
+    xy : (M,2) array
+        Coordinates
+
+    Returns
+    -------
+    wxy: (M,2) array
+        Array with first column wrapped at 360 degrees
+
+    """
+    from astropy.coordinates import Angle
+    import astropy.units as u
+
+    wxy = xy*1.
+    ra = Angle(xy[:, 0]*u.deg).wrap_at(360*u.deg).value
+    wxy[:, 0] = ra
+    return wxy
+
+
+def _parse_sregion(sregion, ncircle=32, **kwargs):
     """
     Parse an S_REGION string with CIRCLE or POLYGON
 
@@ -67,10 +91,6 @@ def _parse_sregion(sregion, ncircle=32, wrap=False, **kwargs):
         List of 2D xy arrays
 
     """
-
-    from astropy.coordinates import Angle
-    import astropy.units as u
-
     if hasattr(sregion, 'decode'):
         decoded = sregion.decode('utf-8').strip().upper()
     else:
@@ -107,10 +127,6 @@ def _parse_sregion(sregion, ncircle=32, wrap=False, **kwargs):
         else:
             poly_i = np.cast[float](spl[ip:]).reshape((-1, 2))
 
-        if wrap:
-            ra = Angle(poly_i[:, 0]*u.deg).wrap_at(360*u.deg).value
-            poly_i[:, 0] = ra
-
         if len(poly_i) < 2:
             continue
 
@@ -120,7 +136,7 @@ def _parse_sregion(sregion, ncircle=32, wrap=False, **kwargs):
 
 
 class SRegion(object):
-    def __init__(self, inp, label=None, **kwargs):
+    def __init__(self, inp, label=None, wrap=True, **kwargs):
         """
         Helper class for parsing an S_REGION strings and general polygon
         tools
@@ -135,7 +151,10 @@ class SRegion(object):
 
         label : str
             Optional label attached to regions and patches
-
+        
+        wrap : bool
+            Wrap first dimension as an angle between (0, 360) degrees
+            
         """
         if isinstance(inp, str):
             self.xy = _parse_sregion(inp, **kwargs)
@@ -169,7 +188,10 @@ class SRegion(object):
 
         else:
             raise IOError('input must be ``str``, ``list``, or ``np.array``')
-
+        
+        if wrap:
+            self.xy = [_wrap_xy(xy_i) for xy_i in self.xy]
+            
         self.inp = inp
         self.ds9_properties = ''
         self.label = label
