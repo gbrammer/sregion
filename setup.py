@@ -6,9 +6,9 @@ version = "0.1" # First version
 version_str = """# 
 __version__ = "{0}"\n""".format(version)
 
-fp = open('sregion/version.py','w')
-fp.write(version_str)
-fp.close()
+with open('sregion/version.py','w') as fp:
+    fp.write(version_str)
+    fp.close()
 
 setup(name='sregion',
       version=version,
