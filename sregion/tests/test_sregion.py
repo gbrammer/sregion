@@ -167,6 +167,7 @@ EQUINOX =               2000.0
 LATPOLE =                    0                                                  
 LONPOLE =                180.0
     """
+
     head = Header.fromstring(header_string.replace('\n', ''))
     wcs = pywcs.WCS(head)
     sw = SRegion(wcs)

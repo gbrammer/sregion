@@ -151,10 +151,10 @@ class SRegion(object):
 
         label : str
             Optional label attached to regions and patches
-        
+
         wrap : bool
             Wrap first dimension as an angle between (0, 360) degrees
-            
+
         """
         if isinstance(inp, str):
             self.xy = _parse_sregion(inp, **kwargs)
@@ -188,10 +188,10 @@ class SRegion(object):
 
         else:
             raise IOError('input must be ``str``, ``list``, or ``np.array``')
-        
+
         if wrap:
             self.xy = [_wrap_xy(xy_i) for xy_i in self.xy]
-            
+
         self.inp = inp
         self.ds9_properties = ''
         self.label = label
