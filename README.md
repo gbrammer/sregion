@@ -1,3 +1,5 @@
+![python package](https://github.com/gbrammer/sregion/actions/workflows/python-package.yml/badge.svg)
+
 # sregion
 Parsing of IVOA S_REGION strings
 
