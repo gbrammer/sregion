@@ -1,72 +1,72 @@
-import unittest
-
 import numpy as np
 import astropy.units as u
 
 from .. import SRegion
+
 
 def test_sregion():
     """
     Test SRegion object
     """
     # From arrays
-    x = np.array([0,0,1,1])
-    y = np.array([0,1,1,0])
+    x = np.array([0, 0, 1, 1])
+    y = np.array([0, 1, 1, 0])
     sr = SRegion(np.array([x, y]).T)
-    
+
     assert(sr.N == 1)
-    
+
     assert(np.allclose(sr.centroid[0], 0.5, rtol=1.e-3))
-    
+
     assert(sr.area[0] == 1.0)
-    
+
     # Converters
     assert(hasattr(sr.path[0], 'contains_point'))
     assert(hasattr(sr.shapely[0], 'boundary'))
-    
+    assert(hasattr(sr.patch()[0], 'get_fc'))
+
     regstr = ('polygon(0.000000,0.000000,0.000000,1.000000,' +
               '1.000000,1.000000,1.000000,0.000000)')
     assert(sr.region[0] == regstr)
-    
+
     sr.label = 'test'
     assert(sr.region[0] == regstr + ' #  text={test}')
-        
+
     # From s_region string
     pstr = ('POLYGON 0.000000 0.000000 0.000000 1.000000 ' +
             '1.000000 1.000000 1.000000 0.000000')
-    
+
     assert(pstr == sr.s_region)
-    
+
     snew = SRegion(pstr)
     assert(snew.area[0] == 1.0)
-    
+
     # From polygon
     snew = SRegion(sr.shapely[0])
     assert(snew.area[0] == 1.0)
-        
+
     # Compound regions
-    x2 = np.array([0,0,1,1]) + 2
-    y2 = np.array([0,1,1,0]) + 2
+    x2 = np.array([0, 0, 1, 1]) + 2
+    y2 = np.array([0, 1, 1, 0]) + 2
     s2 = SRegion(np.array([x2, y2]).T)
-    
+
     un = sr.union(s2.shapely[0], as_polygon=True)
-    
+
     assert(un.area == 2.0)
-    
+
     # Multiple string
     comp = SRegion(' '.join([sr.s_region, s2.s_region]))
     assert(np.allclose(comp.area, 1.0, rtol=1.e-3))
-    
+
     un = comp.union(as_polygon=True)
     assert(un.area == 2.0)
-    
+
     # Intersects
     assert(sr.intersects(s2.shapely[0]) is False)
-    
-    x3 = np.array([0,0,1,1]) + 0.5
-    y3 = np.array([0,1,1,0]) + 0.5
+
+    x3 = np.array([0, 0, 1, 1]) + 0.5
+    y3 = np.array([0, 1, 1, 0]) + 0.5
     s3 = SRegion(np.array([x3, y3]).T)
-    
+
     assert(sr.intersects(s3.shapely[0]) is True)
 
 
@@ -78,36 +78,56 @@ def test_circles():
     circ = SRegion('CIRCLE 5. 5. 1', ncircle=256)
     assert(np.allclose(circ.area, np.pi, rtol=1.e-3))
     assert(np.allclose(circ.centroid[0], 5., rtol=1.e-3))
-    
+
     # R = 2, no units
-    circ2= SRegion('CIRCLE 5. 5. 2', ncircle=256)
+    circ2 = SRegion('CIRCLE 5. 5. 2', ncircle=256)
     assert(np.allclose(circ2.area, 2**2*np.pi, rtol=1.e-3))
     assert(np.allclose(circ2.centroid[0], 5., rtol=1.e-3))
-    
+
     # R = 1 arcsec
     cosd = np.cos(45./180*np.pi)
     csky = SRegion('CIRCLE 45. 45. 1"', ncircle=256)
     assert(np.allclose(csky.area, np.pi/3600.**2/cosd, rtol=1.e-3))
-    assert(np.allclose(csky.sky_area(unit=u.arcsec**2), 
+    assert(np.allclose(csky.sky_area(unit=u.arcsec**2),
                        np.pi*u.arcsec**2, rtol=1.e-3))
-    
+
     # R = 1 arcmin
     cosd = np.cos(45./180*np.pi)
     csky = SRegion('CIRCLE 45. 45. 1\'', ncircle=256)
     assert(np.allclose(csky.area, np.pi/3600./cosd, rtol=1.e-3))
-    assert(np.allclose(csky.sky_area(unit=u.arcsec**2), 
+    assert(np.allclose(csky.sky_area(unit=u.arcsec**2),
                        3600*np.pi*u.arcsec**2, rtol=1.e-3))
     assert(np.allclose(csky.centroid[0], 45., rtol=1.e-3))
-    
+
     # Sky buffer
     cosd = np.cos(45./180*np.pi)
     csky = SRegion('CIRCLE 45. 45. 0.001"', ncircle=256)
     csky.sky_buffer(1.)
-    
+
     assert(np.allclose(csky.area, np.pi/cosd, rtol=1.e-3))
-    assert(np.allclose(csky.sky_area(unit=u.deg**2), 
+    assert(np.allclose(csky.sky_area(unit=u.deg**2),
                        np.pi*u.deg**2, rtol=1.e-3))
-    
+
+
+def test_whitespace():
+    """
+    """
+    pstr = 'CIRCLE 5. 5. 1'
+    for str_i in [pstr, pstr.replace(' ', '   '), '  '+pstr, pstr+'\n']:
+        sr = SRegion(str_i, ncircle=256)
+        assert(sr.N == 1)
+        assert(np.allclose(sr.area, np.pi, rtol=1.e-3))
+        assert(np.allclose(sr.centroid[0], 5., rtol=1.e-3))
+
+    pstr = ('POLYGON 0.000000 0.000000 0.000000 1.000000 ' +
+            '1.000000 1.000000 1.000000 0.000000')
+
+    for str_i in [pstr, pstr.replace(' ', '  '), '  '+pstr, pstr+'\n']:
+        sr = SRegion(str_i)
+        assert(sr.N == 1)
+        assert(np.allclose(sr.area, 1.))
+        assert(np.allclose(sr.centroid, 0.5))
+
 
 def test_fromwcs():
     """
@@ -138,7 +158,7 @@ LONPOLE =                180.0
     head = Header.fromstring(header_string.replace('\n', ''))
     wcs = pywcs.WCS(head)
     sw = SRegion(wcs)
-    pixel_area = np.abs((head['NAXIS1']-1)*head['CD1_1'] * 
+    pixel_area = np.abs((head['NAXIS1']-1)*head['CD1_1'] *
                         (head['NAXIS2']-1)*head['CD2_2'])
 
     assert(np.allclose(sw.area, pixel_area, atol=1.e-5))
