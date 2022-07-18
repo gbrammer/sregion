@@ -31,6 +31,10 @@ def test_sregion():
     sr.label = 'test'
     assert(sr.region[0] == regstr + ' #  text={test}')
 
+    # SQL string
+    pstr = '((0.000,0.000),(0.000,1.000),(1.000,1.000),(1.000,0.000))'
+    assert(sr.polystr(precision=3)[0] == pstr)
+    
     # From s_region string
     pstr = ('POLYGON 0.000000 0.000000 0.000000 1.000000 ' +
             '1.000000 1.000000 1.000000 0.000000')
@@ -43,7 +47,7 @@ def test_sregion():
     # From polygon
     snew = SRegion(sr.shapely[0])
     assert(snew.area[0] == 1.0)
-
+    
     # Compound regions
     x2 = np.array([0, 0, 1, 1]) + 2
     y2 = np.array([0, 1, 1, 0]) + 2

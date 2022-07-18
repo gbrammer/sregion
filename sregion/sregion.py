@@ -326,3 +326,21 @@ class SRegion(object):
         polys = [pstr.format(' '.join([f'{c:.6f}' for c in fp.flatten()]))
                  for fp in self.xy]
         return ' '.join(polys)
+
+
+    def polystr(self, precision=6):
+        """
+        String suitable for, e.g., SQL, e.g., 
+        
+        ((x1,y1),(x2,y2),...)
+        """
+        np.set_printoptions(precision=precision)
+        
+        fps = []
+        for xy in self.xy:
+            fmt = '({0:.pf},{1:.pf})'.replace('p', f'{precision:0}')
+            fpstr = [fmt.format(*row) for row in xy]
+            fps.append('('+','.join(fpstr)+')')
+            
+        return fps
+        
