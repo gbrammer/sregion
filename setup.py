@@ -1,6 +1,7 @@
 from setuptools import setup
 
 version = "0.1"  # First version
+version = "1.0" # works well, includes polystr
 
 version_str = """#
 __version__ = "{0}"\n""".format(version)
