@@ -181,7 +181,9 @@ class SRegion(object):
 
         elif hasattr(inp, 'buffer'):
             # Shapely polygon
-            if hasattr(inp, '__len__'):
+            if hasattr(inp, 'geoms'):
+                self.xy = [np.array(p.boundary.xy).T for p in inp.geoms]
+            elif hasattr(inp, '__len__'):
                 self.xy = [np.array(p.boundary.xy).T for p in inp]
             else:
                 self.xy = [np.array(inp.boundary.xy).T]
@@ -234,13 +236,23 @@ class SRegion(object):
         """
         from shapely.geometry import Polygon
         return [Polygon(fp).convex_hull for fp in self.xy]
-
+    
+    @property
+    def geoms(self):
+        """
+        compatibility for shapely >= 1.8, 2.0
+        """
+        if hasattr(self.shapely, 'geoms'):
+            return self.shapely.geoms
+        else:
+            return self.shapely
+            
     @property
     def area(self):
         """
         Area of shapely polygons
         """
-        return [sh.area for sh in self.shapely]
+        return [sh.area for sh in self.geoms]
 
     def sky_area(self, unit=u.arcmin**2):
         """
@@ -248,17 +260,47 @@ class SRegion(object):
         """
         cosd = np.cos(self.centroid[0][1]/180*np.pi)
         return [(sh.area*cosd*u.deg**2).to(unit)
-                for sh in self.shapely]
+                for sh in self.geoms]
 
-    def patch(self, **kwargs):
+    def matplotlib_patch(self, **kwargs):
+        """
+        `~matplotlib.patches.PathPatch` object
+        """
+        from matplotlib.patches import PathPatch
+        from matplotlib.path import Path
+        
+        #from shapely.geometry import Polygon
+        #from descartes import PolygonPatch
+        if 'label' not in kwargs:
+            kwargs['label'] = self.label
+        
+        patches = [PathPatch(Path(xy), **kwargs)
+                   for xy in self.xy]
+        
+        return patches
+
+    def descartes_patch(self, **kwargs):
         """
         `~descartes.PolygonPatch` object
+        
+        Deprecated because descartes doesn't seem to work with shapely>=2.0
         """
         from descartes import PolygonPatch
         if 'label' not in kwargs:
             kwargs['label'] = self.label
+        
+        return [PolygonPatch(p, **kwargs) for p in self.geoms]
 
-        return [PolygonPatch(p, **kwargs) for p in self.shapely]
+    def patch(self, **kwargs):
+        """
+        general patch object
+        """
+        try:
+            return self.descartes_patch(**kwargs)
+        except IndexError:
+            return self.matplotlib_patch(**kwargs)
+        except ImportError:
+            return self.matplotlib_patch(**kwargs)
 
     def get_patch(self, **kwargs):
         """
@@ -278,7 +320,7 @@ class SRegion(object):
         else:
             un = shape
 
-        for s in self.shapely:
+        for s in self.geoms:
             un = un.union(s)
 
         if as_polygon:
@@ -291,7 +333,7 @@ class SRegion(object):
         Union of self and `shape` object
         """
         test = False
-        for s in self.shapely:
+        for s in self.geoms:
             test |= s.intersects(shape)
 
         return test
