@@ -299,6 +299,8 @@ class SRegion(object):
             return self.descartes_patch(**kwargs)
         except IndexError:
             return self.matplotlib_patch(**kwargs)
+        except ImportError:
+            return self.matplotlib_patch(**kwargs)
 
     def get_patch(self, **kwargs):
         """
