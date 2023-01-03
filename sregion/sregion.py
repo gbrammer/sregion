@@ -1,9 +1,14 @@
 import numpy as np
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path
+
 import astropy.units as u
 import astropy.wcs as pywcs
+from astropy.coordinates import Angle
 
+from shapely.geometry import Polygon
 
-__all__ = ["SRegion"]
+__all__ = ["SRegion", "patch_from_polygon"]
 
 
 def _parse_circle(spli, ncircle=32):
@@ -67,9 +72,6 @@ def _wrap_xy(xy):
         Array with first column wrapped at 360 degrees
 
     """
-    from astropy.coordinates import Angle
-    import astropy.units as u
-
     wxy = xy*1.
     ra = Angle(xy[:, 0]*u.deg).wrap_at(360*u.deg).value
     wxy[:, 0] = ra
@@ -210,7 +212,6 @@ class SRegion(object):
         """
         Buffer polygons accounting for cos(dec)
         """
-        from shapely.geometry import Polygon
 
         new_xy = []
         for xy, c in zip(self.xy, self.centroid):
@@ -226,15 +227,13 @@ class SRegion(object):
         """
         `~matplotlib.path.Path` object
         """
-        import matplotlib.path
-        return [matplotlib.path.Path(fp) for fp in self.xy]
+        return [Path(fp) for fp in self.xy]
 
     @property
     def shapely(self):
         """
         `~shapely.geometry.Polygon` object.
         """
-        from shapely.geometry import Polygon
         return [Polygon(fp).convex_hull for fp in self.xy]
     
     @property
@@ -265,12 +264,7 @@ class SRegion(object):
     def matplotlib_patch(self, **kwargs):
         """
         `~matplotlib.patches.PathPatch` object
-        """
-        from matplotlib.patches import PathPatch
-        from matplotlib.path import Path
-        
-        #from shapely.geometry import Polygon
-        #from descartes import PolygonPatch
+        """        
         if 'label' not in kwargs:
             kwargs['label'] = self.label
         
@@ -385,4 +379,52 @@ class SRegion(object):
             fps.append('('+','.join(fpstr)+')')
             
         return fps
-        
+
+#### PatchPolygon
+# descartes no longer works with shapely>=2.0
+# this is similar do descartes and taken from 
+# https://codereview.stackexchange.com/questions/232294/plotting-shapely-polygon-in-matplotlib
+# credit: Bruno Vermeulen and Graipher at stackexchange
+
+class PatchPolygon:
+    """
+    """
+    def __init__(self, polygon, **kwargs):
+        polygon_path = self.pathify(polygon)
+        self._patch = PathPatch(polygon_path, **kwargs)
+
+    @property
+    def patch(self):
+        """ get a Patch object """
+        return self._patch
+
+    @staticmethod
+    def generate_codes(n):
+        """ The first command needs to be a "MOVETO" command,
+            all following commands are "LINETO" commands.
+        """
+        return [Path.MOVETO] + [Path.LINETO] * (n - 1)
+
+    def pathify(self, polygon):
+        """ Convert coordinates to path vertices. Objects produced by Shapely's
+            analytic methods have the proper coordinate order, no need to sort.
+
+            The codes will be all "LINETO" commands, except for "MOVETO"s at the
+            beginning of each subpath
+        """
+        vertices = list(polygon.exterior.coords)
+        codes = self.generate_codes(len(polygon.exterior.coords))
+
+        for interior in polygon.interiors:
+            vertices.extend(interior.coords)
+            codes.extend(self.generate_codes(len(interior.coords)))
+
+        return Path(vertices, codes)        
+
+def patch_from_polygon(polygon, **kwargs):
+    """
+    Generate the Path object from `PatchPolygon`
+    """
+    obj = PatchPolygon(polygon, **kwargs)
+    return obj._patch
+    

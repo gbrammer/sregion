@@ -1,4 +1,4 @@
-from .sregion import SRegion
+from .sregion import SRegion, patch_from_polygon
 
 try:
     from .version import __version__

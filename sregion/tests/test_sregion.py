@@ -1,7 +1,7 @@
 import numpy as np
 import astropy.units as u
 
-from .. import SRegion
+from .. import SRegion, patch_from_polygon
 
 
 def test_sregion():
@@ -183,3 +183,12 @@ LONPOLE =                180.0
     assert(np.allclose(sw.sky_area(unit=u.deg**2), pixel_area*u.deg**2))
     assert(np.allclose(sw.sky_area(unit=u.arcmin**2),
                        (pixel_area*u.deg**2).to(u.arcmin**2)))
+
+
+def test_patch():
+    """
+    Test patch function
+    """
+    
+    circ = SRegion('CIRCLE 5. 5. 1', ncircle=256)
+    patch = patch_from_polygon(circ.shapely[0], fc='k')
