@@ -424,6 +424,20 @@ class PatchPolygon:
 def patch_from_polygon(polygon, **kwargs):
     """
     Generate the Path object from `PatchPolygon`
+    
+    Parameters
+    ----------
+    polygon : `shapely.geometry.Polygon`
+        Input polygon object
+    
+    kwargs : dict
+        Keywords to pass when generating the ``patch``
+    
+    Returns
+    -------
+    patch : `from matplotlib.patches.PathPatch`
+        The patch that can be added to a `matplotlib` figure
+    
     """
     obj = PatchPolygon(polygon, **kwargs)
     return obj._patch
