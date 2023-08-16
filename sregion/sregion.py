@@ -200,13 +200,16 @@ class SRegion(object):
         self.ds9_properties = ''
         self.label = label
 
+
     @property
     def N(self):
         return len(self.xy)
 
+
     @property
     def centroid(self):
         return [np.mean(fp, axis=0) for fp in self.xy]
+
 
     def sky_buffer(self, buffer_deg):
         """
@@ -222,6 +225,7 @@ class SRegion(object):
 
         self.xy = new_xy
 
+
     @property
     def path(self):
         """
@@ -229,13 +233,15 @@ class SRegion(object):
         """
         return [Path(fp) for fp in self.xy]
 
+
     @property
     def shapely(self):
         """
         `~shapely.geometry.Polygon` object.
         """
         return [Polygon(fp).convex_hull for fp in self.xy]
-    
+
+
     @property
     def geoms(self):
         """
@@ -245,13 +251,15 @@ class SRegion(object):
             return self.shapely.geoms
         else:
             return self.shapely
-            
+
+
     @property
     def area(self):
         """
         Area of shapely polygons
         """
         return [sh.area for sh in self.geoms]
+
 
     def sky_area(self, unit=u.arcmin**2):
         """
@@ -260,6 +268,7 @@ class SRegion(object):
         cosd = np.cos(self.centroid[0][1]/180*np.pi)
         return [(sh.area*cosd*u.deg**2).to(unit)
                 for sh in self.geoms]
+
 
     def matplotlib_patch(self, **kwargs):
         """
@@ -273,6 +282,7 @@ class SRegion(object):
         
         return patches
 
+
     def descartes_patch(self, **kwargs):
         """
         `~descartes.PolygonPatch` object
@@ -285,6 +295,7 @@ class SRegion(object):
         
         return [PolygonPatch(p, **kwargs) for p in self.geoms]
 
+
     def patch(self, **kwargs):
         """
         general patch object
@@ -296,6 +307,7 @@ class SRegion(object):
         except ImportError:
             return self.matplotlib_patch(**kwargs)
 
+
     def get_patch(self, **kwargs):
         """
         `~descartes.PolygonPatch` object
@@ -304,6 +316,24 @@ class SRegion(object):
         """
         return self.patch(**kwargs)
 
+
+    def add_patch_to_axis(self, ax, **kwargs):
+        """
+        Add patches to a plot axis
+        
+        Parameters
+        ----------
+        ax : matplotlib axis
+            Axis in which do draw patches
+        
+        kwargs : dict
+            Keyword arguments passed to `~sregion.SRegion.get_patch`
+        
+        """
+        for patch in self.get_patch(**kwargs):
+            ax.add_patch(patch)
+    
+    
     def union(self, shape=None, as_polygon=False):
         """
         Union of self and `shape` object.  If no `shape` provided, then
@@ -322,6 +352,7 @@ class SRegion(object):
         else:
             return SRegion(un)
 
+
     def intersects(self, shape):
         """
         Union of self and `shape` object
@@ -331,6 +362,7 @@ class SRegion(object):
             test |= s.intersects(shape)
 
         return test
+
 
     @property
     def region(self):
@@ -352,6 +384,7 @@ class SRegion(object):
 
         return [pstr.format(','.join([f'{c:.6f}' for c in fp.flatten()]))+tail
                 for fp in self.xy]
+
 
     @property
     def s_region(self):

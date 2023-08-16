@@ -192,3 +192,20 @@ def test_patch():
     
     circ = SRegion('CIRCLE 5. 5. 1', ncircle=256)
     patch = patch_from_polygon(circ.shapely[0], fc='k')
+
+
+def test_draw_patch():
+    """
+    Draw in matplotlib axis
+    """
+    import matplotlib.pyplot as plt
+    
+    fig, ax = plt.subplots(1,1)
+    ax.plot([-10,10], [-10,10])
+    
+    circ = SRegion('CIRCLE 5. 5. 1', ncircle=256)
+    
+    circ.add_patch_to_axis(ax, fc='r', alpha=0.5)
+    
+    plt.close('all')
+    
