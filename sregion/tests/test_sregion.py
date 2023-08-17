@@ -125,6 +125,20 @@ def test_circles():
                        np.pi*u.deg**2, rtol=1.e-3))
 
 
+def test_stcs():
+    """
+    Test stripping values from STC-S specified strings
+    """
+    stcs = """Union ICRS ( Polygon 239.807341 -18.296691 239.803564 -18.300277 239.799786 -18.296691 239.803563
+    -18.293105 Polygon 239.797826 -18.295944 239.794049 -18.299530 239.790272 -18.295944 239.794049
+    -18.292358)"""
+    
+    sr = SRegion(stcs, verbose=False)
+    
+    assert(len(sr.xy) == 2)
+    assert(np.allclose(sr.area, 2.709e-5, rtol=0.01))
+
+
 def test_whitespace():
     """
     """

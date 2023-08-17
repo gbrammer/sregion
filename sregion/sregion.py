@@ -78,7 +78,7 @@ def _wrap_xy(xy):
     return wxy
 
 
-def _parse_sregion(sregion, ncircle=32, **kwargs):
+def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
     """
     Parse an S_REGION string with CIRCLE or POLYGON
 
@@ -97,7 +97,22 @@ def _parse_sregion(sregion, ncircle=32, **kwargs):
         decoded = sregion.decode('utf-8').strip().upper()
     else:
         decoded = sregion.strip().upper()
-
+    
+    # Strip out prefix for some STS-C regions
+    for strip_string in ['UNION','ICRS','FK5', 'IMAGE', 'WORLD']:
+        if (strip_string in decoded) & verbose:
+            print('Strip {0} from {1}'.format(strip_string, sregion))
+            
+        decoded = decoded.replace(strip_string, '')
+    
+    decoded = decoded.strip()
+    if decoded.startswith('('):
+        decoded = decoded[1:]
+    
+    if decoded.endswith(')'):
+        decoded = decoded[:-1]
+    
+    decoded = decoded.strip()
     polyspl = decoded.replace('POLYGON', 'xxx').replace('CIRCLE', 'xxx')
     polyspl = polyspl.split('xxx')
 
