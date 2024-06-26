@@ -33,7 +33,7 @@ def _parse_circle(spli, ncircle=32):
         msg = f'Input does not have three elements ({spli})'
         raise ValueError(msg)
 
-    x0, y0 = np.cast[float](spli[:2])
+    x0, y0 = np.asarray(spli[:2], dtype=float)
     cosd = np.cos(y0/180*np.pi)
 
     r0 = spli[2]
@@ -142,7 +142,7 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
             # Circle
             poly_i = _parse_circle(spl[ip:], ncircle=ncircle)
         else:
-            poly_i = np.cast[float](spl[ip:]).reshape((-1, 2))
+            poly_i = np.asarray(spl[ip:], dtype=float).reshape((-1, 2))
 
         if len(poly_i) < 2:
             continue
