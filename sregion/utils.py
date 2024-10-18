@@ -7,10 +7,10 @@ from .sregion import SRegion
 
 
 def concave_hull(
-    points, alpha=0.08, sky=True, ref_density=250, scale_power=0.5, **kwargs
+    points, smooth=0.08, sky=True, ref_density=250, scale_power=0.5, **kwargs
 ):
     """
-    Compute the "alpha shape" (concave hull) of a set of points.
+    Compute the approximate concave hull of a set of points.
 
     Adapted from
     https://gist.github.com/jclosure/d93f39a6c7b1f24f8b92252800182889
@@ -21,7 +21,7 @@ def concave_hull(
     points : (N, 2) array
         Point list
 
-    alpha : float
+    smooth : float
         Smoothing parameter
 
     sky : bool
@@ -29,7 +29,7 @@ def concave_hull(
 
     ref_density : float, None
         Reference sky surface density (N per square arcmin).
-        If provided, scale the input ``alpha`` by the surface density of ``points``
+        If provided, scale the input ``smooth`` by the surface density of ``points``
         relative to ``ref_density``.
 
     scale_power : float
@@ -40,7 +40,7 @@ def concave_hull(
     output_hull : `~sregion.sregion.SRegion`
         Concave hull of the input ``points`` array
 
-    scale_alpha : float
+    scale_smooth : float
         Smoothing parameter used, perhaps rescaled
 
     """
@@ -52,7 +52,7 @@ def concave_hull(
         points = points.T
 
     if len(points) < 4:
-        # When you have a triangle, there is no sense in computing an alpha
+        # When you have a triangle, there is no sense in computing an smooth
         # shape.
         return geometry.MultiPoint(list(points)).convex_hull
 
@@ -70,12 +70,12 @@ def concave_hull(
     if (ref_density is not None) & (sky):
         hull = ConvexHull(points)
         sr = SRegion(points[hull.vertices, :])
-        scale_alpha = (
-            alpha
+        scale_smooth = (
+            smooth
             * (ref_density / (len(points) / sr.sky_area()[0].value)) ** scale_power
         )
     else:
-        scale_alpha = alpha
+        scale_smooth = smooth
 
     if sky:
         cosd *= 60
@@ -109,8 +109,8 @@ def concave_hull(
 
         # Here's the radius filter.
         # print circum_r
-        # if circum_r < 1.0/alpha:
-        if circum_r < scale_alpha:
+        # if circum_r < 1.0/smooth:
+        if circum_r < scale_smooth:
             add_edge(edges, edge_points, coords, ia, ib)
             add_edge(edges, edge_points, coords, ib, ic)
             add_edge(edges, edge_points, coords, ic, ia)
@@ -121,7 +121,7 @@ def concave_hull(
     triangles = list(polygonize(m))
     output_hull = SRegion(unary_union(triangles))
 
-    return output_hull, scale_alpha
+    return output_hull, scale_smooth
 
 
 def get_sky_footprint(ra, dec, make_figure=False, **kwargs):
@@ -148,13 +148,17 @@ def get_sky_footprint(ra, dec, make_figure=False, **kwargs):
     import matplotlib.pyplot as plt
 
     points = np.array([ra, dec]).T
-    catalog_hull, scale_alpha = concave_hull(points, **kwargs)
+    catalog_hull, scale_smooth = concave_hull(points, **kwargs)
 
     if make_figure:
         fig, ax = plt.subplots(1, 1, figsize=(5, 5))
-        ax.scatter(*points.T, color="0.5", alpha=0.05, marker=".")
+        ax.scatter(*points.T, color="0.5", alpha=0.05, marker=".", zorder=100)
+        label = f'concave hull, area={catalog_hull.sky_area()[0]:.1f}'
         catalog_hull.add_patch_to_axis(ax, fc="tomato", ec="None", alpha=0.2)
-        catalog_hull.add_patch_to_axis(ax, fc="None", ec="tomato", alpha=0.5)
+        catalog_hull.add_patch_to_axis(ax, fc="None", ec="tomato", alpha=0.5,
+            label=label
+        )
+        ax.set_xlim(*ax.get_xlim()[::-1])
     else:
         fig = None
 
