@@ -153,10 +153,10 @@ def get_sky_footprint(ra, dec, make_figure=False, **kwargs):
     if make_figure:
         fig, ax = plt.subplots(1, 1, figsize=(5, 5))
         ax.scatter(*points.T, color="0.5", alpha=0.05, marker=".", zorder=100)
-        label = f'concave hull, area={catalog_hull.sky_area()[0]:.1f}'
+        label = f"concave hull, area={catalog_hull.sky_area()[0]:.1f}"
         catalog_hull.add_patch_to_axis(ax, fc="tomato", ec="None", alpha=0.2)
-        catalog_hull.add_patch_to_axis(ax, fc="None", ec="tomato", alpha=0.5,
-            label=label
+        catalog_hull.add_patch_to_axis(
+            ax, fc="None", ec="tomato", alpha=0.5, label=label
         )
         ax.set_xlim(*ax.get_xlim()[::-1])
     else:
