@@ -36,10 +36,12 @@ def test_sregion():
     assert(sr.polystr(precision=3)[0] == pstr)
     
     # From s_region string
-    pstr = ('POLYGON 0.000000 0.000000 0.000000 1.000000 ' +
-            '1.000000 1.000000 1.000000 0.000000')
+    for prefix in ['POLYGON', 'POLYGON ICRS']:
+        sr.SREGION_PREFIX = prefix
+        pstr = (f'{prefix} 0.000000 0.000000 0.000000 1.000000 ' +
+                '1.000000 1.000000 1.000000 0.000000')
 
-    assert(pstr == sr.s_region)
+        assert(pstr == sr.s_region)
 
     snew = SRegion(pstr)
     assert(snew.area[0] == 1.0)

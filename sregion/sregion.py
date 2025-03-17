@@ -153,6 +153,7 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
 
 
 class SRegion(object):
+    SREGION_PREFIX = 'POLYGON ICRS'
     def __init__(self, inp, label=None, wrap=True, **kwargs):
         """
         Helper class for parsing an S_REGION strings and general polygon
@@ -406,7 +407,7 @@ class SRegion(object):
         """
         Polygon as VO s_region
         """
-        pstr = 'POLYGON {0}'
+        pstr = self.SREGION_PREFIX + ' {0}'
         polys = [pstr.format(' '.join([f'{c:.6f}' for c in fp.flatten()]))
                  for fp in self.xy]
         return ' '.join(polys)
