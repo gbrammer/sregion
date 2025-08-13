@@ -56,6 +56,7 @@ def _parse_circle(spli, ncircle=32):
     poly_i = np.array([_xc / cosd * scl + x0, _yc * scl + y0]).T
     return poly_i
 
+
 def _parse_box(spli):
     """
     Parse box from split string
@@ -80,12 +81,16 @@ def _parse_box(spli):
     half_width = float(spli[2]) / 2.0
     half_height = float(spli[3]) / 2.0
 
-    poly_i = np.array([[x0-half_width, y0-half_height],
-                       [x0+half_width, y0-half_height],
-                       [x0+half_width, y0+half_height],
-                       [x0-half_width, y0+half_height]
-                     ])
+    poly_i = np.array(
+        [
+            [x0 - half_width, y0 - half_height],
+            [x0 + half_width, y0 - half_height],
+            [x0 + half_width, y0 + half_height],
+            [x0 - half_width, y0 + half_height],
+        ]
+    )
     return poly_i
+
 
 def _wrap_xy(xy):
     """
@@ -143,7 +148,9 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
         decoded = decoded[:-1]
 
     decoded = decoded.strip()
-    polyspl = decoded.replace("POLYGON", "xxx").replace("CIRCLE", "xxx").replace("BOX", "xxx")
+    polyspl = (
+        decoded.replace("POLYGON", "xxx").replace("CIRCLE", "xxx").replace("BOX", "xxx")
+    )
     polyspl = polyspl.split("xxx")
 
     poly = []
