@@ -153,6 +153,23 @@ def test_boxes():
 
     assert box.area[0] == 25.0
 
+    # size with units
+    box = SRegion("BOX ICRS 90 10 5' 5'")
+    assert box.N == 1
+
+    assert np.allclose(box.centroid[0][0], 90, rtol=1.0e-3)
+    assert np.allclose(box.centroid[0][1], 10, rtol=1.0e-3)
+    assert np.allclose(box.sky_area()[0].value, 25.0)
+    assert np.allclose(box.area[0], 25.0 / 3600. / np.cos(10. /180 * np.pi))
+
+    box = SRegion("BOX ICRS 90 10 5\" 5\"")
+    assert box.N == 1
+
+    assert np.allclose(box.centroid[0][0], 90, rtol=1.0e-3)
+    assert np.allclose(box.centroid[0][1], 10, rtol=1.0e-3)
+    assert np.allclose(box.sky_area()[0].value, 25.0 / 3600.)
+    assert np.allclose(box.area[0], 25.0 / (3600.**2) / np.cos(10. /180 * np.pi))
+
     # BOX ICRS GEOCENTER string
     box = SRegion("BOX ICRS GEOCENTER 11.9 40.4 7.5 7.5")
     assert box.N == 1
@@ -244,9 +261,9 @@ def test_patch():
     """
     Test patch function
     """
-
+    from matplotlib.patches import PathPatch
     circ = SRegion("CIRCLE 5. 5. 1", ncircle=256)
-    patch = patch_from_polygon(circ.shapely[0], fc="k")
+    _ = patch_from_polygon(circ.shapely[0], fc="k")
 
 
 def test_draw_patch():

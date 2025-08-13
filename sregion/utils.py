@@ -105,7 +105,7 @@ def concave_hull(
         # Area of triangle by Heron's formula
         area = np.sqrt(s * (s - a) * (s - b) * (s - c))
         circum_r = a * b * c / (4.0 * area)
-        radius = np.sqrt(area / np.pi)
+        # radius = np.sqrt(area / np.pi)
 
         # Here's the radius filter.
         # print circum_r

@@ -77,9 +77,32 @@ def _parse_box(spli):
 
     # Extract center of box
     x0, y0 = np.asarray(spli[:2], dtype=float)
-    cosd = np.cos(y0 / 180.0 * np.pi)
-    half_width = float(spli[2]) / 2.0
-    half_height = float(spli[3]) / 2.0
+    dx, dy = spli[2], spli[3]
+
+    # Parse optional sky coordinates    
+    if dx.endswith('"'):
+        cosd = np.cos(y0 / 180.0 * np.pi)
+        half_width = float(dx[:-1]) / 3600 / cosd / 2
+    elif dx.endswith("'"):
+        cosd = np.cos(y0 / 180.0 * np.pi)
+        half_width = float(dx[:-1]) / 60 / cosd / 2
+    else:
+        try:
+            half_width = float(dx) / 2
+        except ValueError:
+            half_width = 1.0
+
+    if dy.endswith('"'):
+        cosd = np.cos(y0 / 180.0 * np.pi)
+        half_height = float(dy[:-1]) / 3600 / 2
+    elif dy.endswith("'"):
+        cosd = np.cos(y0 / 180.0 * np.pi)
+        half_height = float(dy[:-1]) / 60 / 2
+    else:
+        try:
+            half_height = float(dy) / 2
+        except ValueError:
+            half_height = 1.0
 
     poly_i = np.array(
         [
@@ -170,7 +193,7 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
         for ip, p in enumerate(spl):
             # Find index of first float
             try:
-                _pf = float(p)
+                _ = float(p)
                 break
             except ValueError:
                 continue
