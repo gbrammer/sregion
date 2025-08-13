@@ -127,6 +127,38 @@ def test_circles():
                        np.pi*u.deg**2, rtol=1.e-3))
 
 
+def test_boxes():
+    """
+    Initialize from ``BOX X Y W H``
+    """
+    # BOX string
+    box = SRegion('BOX 90 10 5 5')
+    assert(box.N == 1)
+
+    assert(np.allclose(box.centroid[0][0], 90, rtol=1.e-3))
+    assert(np.allclose(box.centroid[0][1], 10, rtol=1.e-3))
+
+    assert(box.area[0] == 25.0)
+
+    # BOX ICRS string
+    box = SRegion('BOX ICRS 90 10 5 5')
+    assert(box.N == 1)
+
+    assert(np.allclose(box.centroid[0][0], 90, rtol=1.e-3))
+    assert(np.allclose(box.centroid[0][1], 10, rtol=1.e-3))
+
+    assert(box.area[0] == 25.0)
+
+    # BOX ICRS GEOCENTER string
+    box = SRegion('BOX ICRS GEOCENTER 11.9 40.4 7.5 7.5')
+    assert(box.N == 1)
+
+    assert(np.allclose(box.centroid[0][0], 11.9, rtol=1.e-3))
+    assert(np.allclose(box.centroid[0][1], 40.4, rtol=1.e-3))
+
+    assert(box.area[0] == 56.25)
+
+
 def test_stcs():
     """
     Test stripping values from STC-S specified strings
