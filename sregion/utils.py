@@ -44,7 +44,7 @@ def concave_hull(
         Smoothing parameter used, perhaps rescaled
 
     """
-    from shapely.ops import cascaded_union, unary_union, polygonize
+    from shapely.ops import unary_union, polygonize
     from shapely import geometry
     from scipy.spatial import Delaunay, ConvexHull
 

@@ -56,6 +56,36 @@ def _parse_circle(spli, ncircle=32):
     poly_i = np.array([_xc / cosd * scl + x0, _yc * scl + y0]).T
     return poly_i
 
+def _parse_box(spli):
+    """
+    Parse box from split string
+
+    Parameters
+    ----------
+    spli : list
+        List of box parameters ``['x', 'y', 'width', 'height']``
+
+    Returns
+    -------
+    poly_i : array-like
+        2D xy array
+    """
+    if len(spli) != 4:
+        msg = f"Input does not have four elements ({spli})"
+        raise ValueError(msg)
+
+    # Extract center of box
+    x0, y0 = np.asarray(spli[:2], dtype=float)
+    cosd = np.cos(y0 / 180.0 * np.pi)
+    half_width = float(spli[2]) / 2.0
+    half_height = float(spli[3]) / 2.0
+
+    poly_i = np.array([[x0-half_width, y0-half_height],
+                       [x0+half_width, y0-half_height],
+                       [x0+half_width, y0+half_height],
+                       [x0-half_width, y0+half_height]
+                     ])
+    return poly_i
 
 def _wrap_xy(xy):
     """
@@ -80,7 +110,7 @@ def _wrap_xy(xy):
 
 def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
     """
-    Parse an S_REGION string with CIRCLE or POLYGON
+    Parse an S_REGION string with CIRCLE, POLYGON or BOX
 
     Parameters
     ----------
@@ -113,7 +143,7 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
         decoded = decoded[:-1]
 
     decoded = decoded.strip()
-    polyspl = decoded.replace("POLYGON", "xxx").replace("CIRCLE", "xxx")
+    polyspl = decoded.replace("POLYGON", "xxx").replace("CIRCLE", "xxx").replace("BOX", "xxx")
     polyspl = polyspl.split("xxx")
 
     poly = []
@@ -141,12 +171,14 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
         if len(spl[ip:]) == 3:
             # Circle
             poly_i = _parse_circle(spl[ip:], ncircle=ncircle)
+        elif len(spl[ip:]) == 4:
+            # Box
+            poly_i = _parse_box(spl[ip:])
         else:
             poly_i = np.asarray(spl[ip:], dtype=float).reshape((-1, 2))
 
         if len(poly_i) < 2:
             continue
-
         poly.append(poly_i)
 
     return poly
