@@ -42,6 +42,20 @@ ncircle=512 0.99997 [10. 10.]
 3.14128 arcsec2
 
 #
+# Box string
+#
+>>> sr = SRegion('BOX ICRS 90 10 7.5 7.5')
+>>> print(sr.centroid)
+[array([90., 10.])]
+>>> print(sr.area)
+[56.25]
+
+# Box with width/height in angular units
+>>> sr = SRegion("BOX ICRS 90 10 7.5' 7.5'")
+>>> print(f"{sr.sky_area()[0]:.3f}")
+56.250 arcmin2
+
+#
 # From WCS objects
 #
 >>> from astropy.wcs import WCS
