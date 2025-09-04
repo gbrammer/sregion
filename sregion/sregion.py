@@ -217,7 +217,7 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
 class SRegion(object):
     SREGION_PREFIX = "POLYGON ICRS"
 
-    def __init__(self, inp, label=None, wrap=True, **kwargs):
+    def __init__(self, inp, label=None, wrap=True, get_convex_hull=False, pad=None, **kwargs):
         """
         Helper class for parsing an S_REGION strings and general polygon
         tools
@@ -236,6 +236,8 @@ class SRegion(object):
         wrap : bool
             Wrap first dimension as an angle between (0, 360) degrees
 
+        get_convex_hull : bool
+            Compute a `scipy.spatial.ConvexHull` from ``inp`` before generating
         """
         if isinstance(inp, str):
             self.xy = _parse_sregion(inp, **kwargs)
@@ -251,6 +253,10 @@ class SRegion(object):
                         raise ValueError(f"Input shape {sh} is not (M,2)")
                     else:
                         inp = inp.T
+
+            if get_convex_hull:
+                from scipy.spatial import ConvexHull
+                inp = inp[ConvexHull(inp).vertices, :]
 
             self.xy = [inp]
 
@@ -278,6 +284,10 @@ class SRegion(object):
         self.inp = inp
         self.ds9_properties = ""
         self.label = label
+        self.is_wrapped = wrap
+
+        if pad is not None:
+            self.pad(scale=pad, in_place=True, **kwargs)
 
     @property
     def N(self):
@@ -475,6 +485,51 @@ class SRegion(object):
             fps.append("(" + ",".join(fpstr) + ")")
 
         return fps
+
+    def pad(self, scale=1.5, center="centroid", sky=True, in_place=True, **kwargs):
+        """
+        Expand or shrink regions
+
+        Parameters
+        ----------
+        scale : float
+            Scale factor, > 1 expands, < 1 contracts
+
+        sky : bool
+            Account for cos(declination)
+
+        in_place : bool
+            Update `xy` attribute in-place
+
+        Returns
+        -------
+        result : `sregion.SRegion`, None
+            New region object if ``in_place = True``
+
+        """
+        xy_pad = []
+        if center in ["centroid"]:
+            x0 = self.centroid
+        else:
+            x0 = [center] * self.N
+
+        for j in range(self.N):
+            if sky:
+                cosd = np.cos([x0[j][1]/180*np.pi, 0])
+            else:
+                cosd = np.ones(2)
+
+            xy_pad.append(
+                ((self.xy[j] - x0[j]) * cosd) * scale / cosd + x0[j]
+            )
+
+        if in_place:
+            self.xy = xy_pad
+            result = None
+        else:
+            result = SRegion(xy_pad, wrap=self.is_wrapped, label=self.label)
+
+        return result
 
 
 #### PatchPolygon
