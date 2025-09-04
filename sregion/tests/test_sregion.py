@@ -280,3 +280,36 @@ def test_draw_patch():
     circ.add_patch_to_axis(ax, fc="r", alpha=0.5)
 
     plt.close("all")
+
+
+def test_convex_hull():
+
+    x = np.array([0, 0, 1, 1, 0.5])
+    y = np.array([0, 1, 1, 0, 0.5])
+
+    srh = SRegion(np.array([x, y]).T, get_convex_hull=True)
+    assert srh.xy[0].ndim == 2
+    assert srh.area[0] == 1.0
+
+
+def test_padding():
+
+    x = np.array([0, 0, 1, 1])
+    y = np.array([0, 1, 1, 0])
+
+    sr = SRegion(np.array([x, y]).T, pad=2)
+    assert sr.area[0] == 4.0
+
+    sr = SRegion(np.array([x, y]).T)
+    sr.pad(scale=2, in_place=True)
+    assert sr.area[0] == 4.0
+
+    sr = SRegion(np.array([x, y]).T, wrap=False)
+    sr2 = sr.pad(scale=2., in_place=False)
+    assert sr2.area[0] == 4.0
+    assert np.allclose(sr2.centroid, 0.5)
+
+    sr = SRegion(np.array([x, y]).T, wrap=False)
+    sr2 = sr.pad(scale=2., center=[0,0], in_place=False)
+    assert sr2.area[0] == 4.0
+    assert np.allclose(sr2.centroid, 1.0)
