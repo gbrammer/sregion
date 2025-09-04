@@ -124,3 +124,5 @@ polygon(0.000000,0.000000,0.000000,1.000000,1.000000,1.000000,1.000000,0.000000)
 
     
 ```
+
+Region [padding](https://github.com/gbrammer/sregion/pull/11).
