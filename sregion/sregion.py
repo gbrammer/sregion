@@ -321,8 +321,6 @@ class SRegion(object):
             Polygon centroid
         """
         dA = A - A[0]
-        ak = dA[1:-1]
-        ak1 = dA[2:]
 
         num = 0.
         den = 0.
