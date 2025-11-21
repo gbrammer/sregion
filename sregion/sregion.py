@@ -296,8 +296,54 @@ class SRegion(object):
         return len(self.xy)
 
     @property
-    def centroid(self):
+    def mean_centroid(self):
+        """
+        "incorrect" centroid from the mean along the polygon dimensions
+        """
         return [np.mean(fp, axis=0) for fp in self.xy]
+
+    @staticmethod
+    def polygon_centroid(A):
+        """
+        Centroid of a polygon
+
+        Use triangle algorithm from user "Slumberland" at
+        https://math.stackexchange.com/questions/90463/how-can-i-calculate-the-centroid-of-polygon
+
+        Parameters
+        ----------
+        A : (N, 2) array
+            Vertices of a polygon
+
+        Returns
+        -------
+        C : (2, ) array
+            Polygon centroid
+        """
+        dA = A - A[0]
+        ak = dA[1:-1]
+        ak1 = dA[2:]
+
+        num = 0.
+        den = 0.
+
+        for k in range(1, len(A)-1):
+            u, v = dA[k], dA[k+1]
+            wk = 0.5 * (u[0] * v[1] - u[1] * v[0])
+            Ck = A[0] + 1./3 * (dA[k] + dA[k+1])
+            num += wk * Ck
+            den += wk
+
+        C = num / den
+
+        return C
+
+    @property
+    def centroid(self):
+        """
+        "correct" centroid of the polygons using `SRegion.polygon_centroid`
+        """
+        return [self.polygon_centroid(fp) for fp in self.xy]
 
     def sky_buffer(self, buffer_deg):
         """
