@@ -217,6 +217,8 @@ def _parse_sregion(sregion, ncircle=32, verbose=False, **kwargs):
 class SRegion(object):
     SREGION_PREFIX = "POLYGON ICRS"
 
+    SHAPELY_CONVEX_HULL = True
+
     def __init__(self, inp, label=None, wrap=True, get_convex_hull=False, pad=None, **kwargs):
         """
         Helper class for parsing an S_REGION strings and general polygon
@@ -322,8 +324,14 @@ class SRegion(object):
     def shapely(self):
         """
         `~shapely.geometry.Polygon` object.
+        
+        If the attribute ``self.SHAPELY_CONVEX_HULL`` is True, then the result
+        is the convex hull of the xy polygon.
         """
-        return [Polygon(fp).convex_hull for fp in self.xy]
+        if self.SHAPELY_CONVEX_HULL:
+            return [Polygon(fp).convex_hull for fp in self.xy]
+        else:
+            return [Polygon(fp) for fp in self.xy]
 
     @property
     def geoms(self):
