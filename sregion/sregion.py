@@ -271,7 +271,11 @@ class SRegion(object):
         elif hasattr(inp, "buffer"):
             # Shapely polygon
             if hasattr(inp, "geoms"):
-                self.xy = [np.array(p.boundary.xy).T for p in inp.geoms]
+                try:
+                    self.xy = [np.array(p.exterior.xy).T for p in inp.geoms]
+                except NotImplementedError:
+                    self.xy = [np.array(p.boundary.xy).T for p in inp.geoms]
+
             elif hasattr(inp, "__len__"):
                 self.xy = [np.array(p.boundary.xy).T for p in inp]
             else:
