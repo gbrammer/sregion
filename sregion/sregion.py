@@ -362,6 +362,49 @@ class SRegion(object):
         self.xy = new_xy
 
     @property
+    def extent(self):
+        """
+        Calculate limits of bounding box
+        
+        Returns
+        -------
+        extent : (float, float, float, float)
+            Region extent ``(xmin, xmax, ymin, ymax)``
+
+        """
+        xmin = np.inf
+        xmax = -np.inf
+        ymin = np.inf
+        ymax = -np.inf
+        for xy in self.xy:
+            xymin = xy.min(axis=0)
+            xymax = xy.max(axis=0)
+
+            xmin = np.minimum(xymin[0], xmin)
+            xmax = np.maximum(xymax[0], xmax)
+            ymin = np.minimum(xymin[1], ymin)
+            ymax = np.maximum(xymax[1], ymax)
+        
+        return (xmin, xmax, ymin, ymax)
+
+
+    @property
+    def sky_extent(self):
+        """
+        Calculate limits of "north-up" bounding box
+        
+        Returns
+        -------
+        extent : (float, float, float, float)
+            Region extent ``(max(ra), min(ra), min(dec), max(dec))``
+
+        """
+        (xmin, xmax, ymin, ymax) = self.extent
+        
+        return (xmax, xmin, ymin, ymax)
+
+
+    @property
     def path(self):
         """
         `~matplotlib.path.Path` object
@@ -440,6 +483,7 @@ class SRegion(object):
         except ImportError:
             return self.matplotlib_patch(**kwargs)
 
+
     def get_patch(self, **kwargs):
         """
         `~descartes.PolygonPatch` object
@@ -447,6 +491,56 @@ class SRegion(object):
         ** Deprecated, use patch **
         """
         return self.patch(**kwargs)
+
+
+    def bounding_box(self, sky=False, pad=1.0, as_string=False, square=False):
+        """
+        Compute bounding box s_region
+
+        Parameters
+        ----------
+        sky : bool
+            Calculate as sky coordinates
+
+        pad : float
+            Padding to apply to bounding box extent
+
+        as_string : bool
+            Output type
+
+        Returns
+        -------
+        bbox_sr : string, `~sregion.sregion.SRegion`
+            If ``as_string``, return the ``BOX(x0, y0, xsize, ysize)`` string,
+            otherwise, `~sregion.sregion.SRegion`.
+
+        """
+        (xmin, xmax, ymin, ymax) = self.extent
+        dx = (xmax - xmin)
+        dy = (ymax - ymin)
+        x0 = np.mean([xmin, xmax])
+        y0 = np.mean([ymin, ymax])
+
+        if sky:
+            cosd  = np.cos(y0 / 180 * np.pi)
+            if square:
+                dmax = np.maximum(dx * cosd, dy)
+                dx = dmax / cosd
+                dy = dmax
+            box = f"BOX({x0},{y0},{dx * cosd * 60}',{dy * 60}')"
+        else:
+            if square:
+                dx = dy = np.maximum(dx, dy)
+
+            box = f"BOX({x0},{y0},{dx},{dy})"
+
+        if as_string:
+            return box
+
+        box_sr = SRegion(box, wrap=sky).pad(pad, sky=sky, in_place=False)
+
+        return box_sr
+
 
     def add_patch_to_axis(self, ax, **kwargs):
         """
@@ -461,8 +555,29 @@ class SRegion(object):
             Keyword arguments passed to `~sregion.SRegion.get_patch`
 
         """
-        for patch in self.get_patch(**kwargs):
+        for i, patch in enumerate(self.get_patch(**kwargs)):
+            if i > 0:
+                patch.set_label(None)
+
             ax.add_patch(patch)
+
+
+    def set_axis_ranges(self, ax, pad=1.0, sky=False, square=False):
+        """
+        Set plot axis ranges based on ``extent``
+        """
+        
+        bbox = self.bounding_box(sky=sky, pad=pad, square=square)
+        xmin, xmax, ymin, ymax = bbox.extent
+
+        if sky:
+            ax.set_xlim(xmax, xmin)
+            ax.set_aspect(1. / np.cos(np.mean([ymin, ymax]) / 180 * np.pi))
+        else:
+            ax.set_xlim(xmin, xmax)
+
+        ax.set_ylim(ymin, ymax)
+
 
     def union(self, shape=None, as_polygon=False):
         """

@@ -163,3 +163,66 @@ def get_sky_footprint(ra, dec, make_figure=False, **kwargs):
         fig = None
 
     return catalog_hull, fig
+
+
+def moc_patch_union(moc, wcs, buffer=0.001, optimize=True, sky=False):
+    """
+    Compute SRegion from union of healpix pixels in a Multi-object Coverage
+    (MOC) map
+    
+    Parameters
+    ----------
+    moc : `mocpy.moc.MOC`
+        Multi-object Coverage object
+
+    wcs : `astropy.wcs.WCS`
+        WCS to evaluate from the healpix pixels
+
+    buffer : float
+        Small buffer to avoid numerical issues with exact healpix region
+        overlaps
+
+    optimize : bool
+        Passed to `mocpy.moc.plot.fill.build_plotting_moc`.
+
+    sky : bool
+        If True, return region(s) in celestial coordinates.  Otherwise,
+        return regions in the pixels of ``wcs``
+
+    Returns
+    -------
+    sr : `~sregion.sregion.SRegion`
+        Region object
+
+    """
+    from matplotlib.path import Path
+    from shapely import Polygon
+
+    from mocpy.moc.plot.fill import compute_the_patches, build_plotting_moc
+
+    moc_to_plot = build_plotting_moc(moc=moc, wcs=wcs, optimize=optimize)
+
+    patches = compute_the_patches(moc=moc_to_plot, wcs=wcs)
+
+    poly = None
+    for p in patches:
+            
+        last = np.append(-1, np.where(p[1] == Path.CLOSEPOLY)[0])
+
+        if sky:
+            xy = np.array(wcs.all_pix2world(*p[0].T, 0)).T
+        else:
+            xy = p[0]
+        
+        for j in range(len(last)-1):
+            sl = slice(last[j]+1, last[j+1])
+            poly_i = Polygon(xy[sl,:]).buffer(buffer)
+            if poly is None:
+                poly = poly_i
+            else:
+                poly = poly.union(poly_i)
+
+    sr = SRegion(poly, wrap=(sky))
+
+    return sr
+
