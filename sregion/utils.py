@@ -226,3 +226,50 @@ def moc_patch_union(moc, wcs, buffer=0.001, optimize=True, sky=False):
 
     return sr
 
+
+def make_axis_wcs(ax, pixscale_arcsec=1, **kwargs):
+    """
+    Generate a simple WCS from a plot axis view
+
+    Parameters
+    ----------
+    ax : `~matplotlib.axes.Axes`
+        Plot axis
+
+    pixscale_arcsec : float
+        Pixel scale in arcsec
+
+    Returns
+    -------
+    wcs : `~astropy.wcs.WCS`
+        North-up WCS with TAN projection
+
+    """
+    from astropy.wcs import WCS
+
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+
+    crval1 = np.mean(xlim)
+    crval2 = np.mean(ylim)
+
+    cosd = np.cos(crval2 / 180 * np.pi)
+    xsize = np.abs(np.diff(xlim)[0]) * cosd * 3600
+    ysize = np.abs(np.diff(ylim)[0]) * 3600
+
+    wcs = WCS({
+        "naxis": 2,
+        "naxis1": xsize / pixscale_arcsec,
+        "naxis2": ysize / pixscale_arcsec,
+        "crpix1": xsize / pixscale_arcsec / 2,
+        "crpix2": ysize / pixscale_arcsec / 2,
+        "crval1": crval1,
+        "crval2": crval2,
+        "cdelt1": -pixscale_arcsec / 3600.,
+        "cdelt2": pixscale_arcsec / 3600.,
+        "ctype1": "RA---TAN",
+        "ctype2": "DEC--TAN",
+    })
+
+    return wcs
+
