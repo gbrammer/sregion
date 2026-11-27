@@ -277,9 +277,16 @@ class SRegion(object):
                     self.xy = [np.array(p.boundary.xy).T for p in inp.geoms]
 
             elif hasattr(inp, "__len__"):
-                self.xy = [np.array(p.boundary.xy).T for p in inp]
+                try:
+                    self.xy = [np.array(p.exterior.xy).T for p in inp]
+                except NotImplementedError:
+                    self.xy = [np.array(p.boundary.xy).T for p in inp]
+
             else:
-                self.xy = [np.array(inp.boundary.xy).T]
+                try:
+                    self.xy = [np.array(inp.exterior.xy).T]
+                except NotImplementedError:
+                    self.xy = [np.array(inp.boundary.xy).T]
 
         else:
             raise IOError("input must be ``str``, ``list``, or ``np.array``")
